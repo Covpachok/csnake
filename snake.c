@@ -20,6 +20,8 @@ enum color_pair_ids {
 	sn_clrpid 	= 2,
 	fd_clrpid	= 3,
 	gf_clrpid  	= 4,
+	wm_clrpid 	= 5,
+	lm_clrpid 	= 6
 };
 
 enum {
@@ -82,15 +84,15 @@ static void snake_movement(WINDOW *win, snkt *snk)
 
 	/* snake teleportation on the other side of the field */
 	if(snk->pos[0].x < 1)
-		snk->pos[0].x = gwin_w-2;
+		snk->pos[0].x = gfld_w;
 	else
-	if(snk->pos[0].x > gwin_w-2)
+	if(snk->pos[0].x > gfld_w)
 		snk->pos[0].x = 1;
 
 	if(snk->pos[0].y < 1)
-		snk->pos[0].y = gwin_h-2;
+		snk->pos[0].y = gfld_h;
 	else
-	if(snk->pos[0].y > gwin_h-2)
+	if(snk->pos[0].y > gfld_h)
 		snk->pos[0].y = 1;
 
 	mvwaddch(win, snk->pos[0].y, snk->pos[0].x, snake_head_char);
@@ -112,8 +114,8 @@ static void spawn_food(WINDOW *win, crdt *food, snkt snk, int lvl_id)
 	flag = 1;
 	while(flag) {
 		flag = 0;
-		y = 1+rand()%(gwin_h-2); 
-		x = 1+rand()%(gwin_w-2);
+		y = 1 + rand() % (gfld_h); 
+		x = 1 + rand() % (gfld_w);
 		for(i = 0; i < snk.len; i++)
 			flag += (snk.pos[i].y == y) && (snk.pos[i].x == x);
 		flag += (lvl_shapes[lvl_id][y-1][x-1] == '#');
@@ -200,6 +202,8 @@ static void init_colors()
 	init_pair(sn_clrpid, COLOR_GREEN  	, COLOR_BLACK);
 	init_pair(fd_clrpid, COLOR_YELLOW 	, COLOR_BLACK);
 	init_pair(gf_clrpid, COLOR_BLUE 	, COLOR_BLACK);
+	init_pair(wm_clrpid, COLOR_GREEN 	, COLOR_BLACK);
+	init_pair(lm_clrpid, COLOR_RED  	, COLOR_BLACK);
 }
 
 static void init_game_win(WINDOW **win, int sm_h, int sm_w)
@@ -218,16 +222,31 @@ static int is_level_passed(int slen)
 static void end_game_msg(int ilp, int sm_h, int sm_w)
 {
 	if(ilp) {
+		attrset(COLOR_PAIR(wm_clrpid) | A_BOLD);
 		mvprintw((sm_h - gwin_h)/2,
 				(sm_w - sizeof(winning_msg) - 1)/2,
 				winning_msg);
+		attroff(COLOR_PAIR(wm_clrpid) | A_BOLD);
 	} else {
+		attrset(COLOR_PAIR(lm_clrpid) | A_BOLD);
 		mvprintw((sm_h - gwin_h)/2,
 				(sm_w - sizeof(losing_msg) - 1)/2,
 				losing_msg);
+		attroff(COLOR_PAIR(lm_clrpid) | A_BOLD);
 	}
 	refresh();
 	napms(2000);
+}
+
+void erase_game_win(WINDOW **win)
+{
+	int i, j;
+	for(i = 1; i < gfld_h + 1; i++) 
+		for(j = 1; j < gfld_w + 1; j++)
+			mvwaddch(*win, i, j, ' ');
+	wborder(*win, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
+	wrefresh(*win);
+	delwin(*win);
 }
 
 void snake_game(int lvl_id)
@@ -284,4 +303,5 @@ void snake_game(int lvl_id)
 	
 	notimeout(game_win, 1);
 	free_snake(&snake);
+	erase_game_win(&game_win);
 }

@@ -58,6 +58,21 @@ void write_lvl_id(WINDOW *win, int lvl_id)
 	wattroff(win, COLOR_PAIR(titles_clrpid) | A_BOLD);
 }
 
+void mm_win_init(WINDOW **win, int sm_y, int sm_x)
+{
+	*win = newwin(mwin_h, mwin_w,
+			(sm_y - mwin_h)/2,
+			(sm_x - mwin_w)/2);
+	box(*win, 0, 0);
+}
+
+void mm_win_delete(WINDOW **win)
+{
+	wborder(*win, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
+	wrefresh(*win);
+	delwin(*win);
+}
+
 void main_menu(void (*mm_func[])(int))
 {
 	WINDOW *mmw;
@@ -70,10 +85,7 @@ void main_menu(void (*mm_func[])(int))
 	init_pair(titles_clrpid, COLOR_YELLOW, COLOR_BLACK);
 
 	while(true) {
-		mmw = newwin(mwin_h, mwin_w,
-				(sm_y - mwin_h)/2,
-				(sm_x - mwin_w)/2);
-		box(mmw, 0, 0);
+		mm_win_init(&mmw, sm_y, sm_x);
 		write_menu_titles(mmw);
 
 		while((key = getch())) {
@@ -105,7 +117,8 @@ void main_menu(void (*mm_func[])(int))
 						func_params[0] = 9;
 					break;
 				case key_enter:
-					goto run_func;
+					if(cur_pos != 1)
+						goto run_func;
 					break;
 			}
 			write_lvl_id(mmw, func_params[0]);
@@ -113,13 +126,10 @@ void main_menu(void (*mm_func[])(int))
 			wrefresh(mmw);
 		}
 run_func:
-		(mm_func[cur_pos])(func_params[cur_pos]);
-
 		erase_menu_titles(mmw);
+		mm_win_delete(&mmw);
 
-		wborder(mmw, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
-		wrefresh(mmw);
-		delwin(mmw);
+		(mm_func[cur_pos])(func_params[cur_pos]);
 	}
 }
 
