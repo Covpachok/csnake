@@ -16,7 +16,7 @@ const char *menu_titles[titles_count] = {
 	"< EXIT >"
 };
 
-void select_title(WINDOW *win, int num, attr_t attr)
+static void select_title(WINDOW *win, int num, attr_t attr)
 {
 	mvwchgat(win, (num*3)+2,
 			(mwin_w - title_len)/2,
@@ -24,7 +24,7 @@ void select_title(WINDOW *win, int num, attr_t attr)
 			titles_clrpid, NULL);
 }
 
-void write_menu_titles(WINDOW *win)
+static void write_menu_titles(WINDOW *win)
 {
 	int i;
 	for(i = 0; i < titles_count; i++) {
@@ -37,7 +37,7 @@ void write_menu_titles(WINDOW *win)
 	wrefresh(win);
 }
 
-void erase_menu_titles(WINDOW *win)
+static void erase_menu_titles(WINDOW *win)
 {
 	int i;
 	for(i = 0; i < titles_count; i++) {
@@ -48,7 +48,7 @@ void erase_menu_titles(WINDOW *win)
 	wrefresh(win);
 }
 
-void write_lvl_id(WINDOW *win, int lvl_id)
+static void write_lvl_id(WINDOW *win, int lvl_id)
 {
 	char idch = '0' + lvl_id;
 	wattrset(win, COLOR_PAIR(titles_clrpid) | A_BOLD);
@@ -58,7 +58,7 @@ void write_lvl_id(WINDOW *win, int lvl_id)
 	wattroff(win, COLOR_PAIR(titles_clrpid) | A_BOLD);
 }
 
-void mm_win_init(WINDOW **win, int sm_y, int sm_x)
+static void mm_win_init(WINDOW **win, int sm_y, int sm_x)
 {
 	*win = newwin(mwin_h, mwin_w,
 			(sm_y - mwin_h)/2,
@@ -66,7 +66,7 @@ void mm_win_init(WINDOW **win, int sm_y, int sm_x)
 	box(*win, 0, 0);
 }
 
-void mm_win_delete(WINDOW **win)
+static void mm_win_delete(WINDOW **win)
 {
 	wborder(*win, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
 	wrefresh(*win);

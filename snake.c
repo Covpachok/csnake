@@ -32,7 +32,7 @@ enum {
 const char snake_body_char 	= 'o';
 const char snake_head_char 	= '@';
 const char food_char 		= '&';
-const char winning_msg[] 	= "YOU WIN";
+const char winning_msg[] 	= "YOU WIN!";
 const char losing_msg[]  	= "YOU LOSE";
 
 static int is_snake_crashed(snkt snk, int lvl_id)
@@ -224,13 +224,13 @@ static void end_game_msg(int ilp, int sm_h, int sm_w)
 	if(ilp) {
 		attrset(COLOR_PAIR(wm_clrpid) | A_BOLD);
 		mvprintw((sm_h - gwin_h)/2,
-				(sm_w - sizeof(winning_msg) - 1)/2,
+				(sm_w - sizeof(winning_msg) + 1)/2,
 				winning_msg);
 		attroff(COLOR_PAIR(wm_clrpid) | A_BOLD);
 	} else {
 		attrset(COLOR_PAIR(lm_clrpid) | A_BOLD);
 		mvprintw((sm_h - gwin_h)/2,
-				(sm_w - sizeof(losing_msg) - 1)/2,
+				(sm_w - sizeof(losing_msg) + 1)/2,
 				losing_msg);
 		attroff(COLOR_PAIR(lm_clrpid) | A_BOLD);
 	}
