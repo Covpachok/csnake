@@ -4,6 +4,7 @@
 
 #include "snake.h"
 #include "sconst.h"
+#include "mmenu.h"
 
 void scr_prep()
 {
@@ -22,21 +23,16 @@ void scr_rest()
 	endwin();
 }
 
-void quit()
+void quit(int extc)
 {
 	scr_rest();
-	exit(0);
+	exit(extc);
 }
 
 int main()
 {
-	WINDOW *mm_win;
-#if 0
-	MENU *main_menu;
-	ITEM **mm_items;
-	void (*mm_func[])(void) = { &snake_game, &quit };
-#endif
-	int scr_max_x, scr_max_y, key, n_choices, i;
+	void (*mm_func[])(int) = { &snake_game, &snake_game, &quit };
+	int scr_max_x, scr_max_y, key;
 
 	scr_prep();
 
@@ -56,30 +52,8 @@ int main()
 #endif
 	refresh();
 
-	mm_win = newwin(mwin_h, mwin_w,
-				(scr_max_y - mwin_h)/2,
-				(scr_max_x - mwin_w)/2);
-	box(mm_win, 0, 0);
-	wrefresh(mm_win);
-
-#if 0
-	n_choices = sizeof(menu_titles)/sizeof(menu_titles[0]);
-	mm_items = calloc(n_choices, sizeof(ITEM *));
-	for(i = 0; i < n_choices; i++)
-		mm_items[i] = new_item(menu_titles[i], "");
-
-	main_menu = new_menu(mm_items);
-	set_menu_win(main_menu, mm_win);
-
-	set_menu_mark(main_menu, " > ");
-
-	box(mm_win, 0, 0);
-
-	post_menu(main_menu);
-	wrefresh(mm_win);
-
-	napms(2000);
-#endif
+	main_menu(mm_func);
+	refresh();
 
 	while((key = getch()) != key_escape) {
 		if((key >= '0') && (key <= '9')) {

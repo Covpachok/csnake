@@ -17,9 +17,9 @@ typedef struct {
 } snkt;
 
 enum color_pair_ids {
-	sn_clrpid 	= 1,
-	fd_clrpid	= 2,
-	gf_clrpid  	= 3,
+	sn_clrpid 	= 2,
+	fd_clrpid	= 3,
+	gf_clrpid  	= 4,
 };
 
 enum {
@@ -32,11 +32,10 @@ const char snake_head_char 	= '@';
 const char food_char 		= '&';
 const char winning_msg[] 	= "YOU WIN";
 const char losing_msg[]  	= "YOU LOSE";
-const char *menu_titles[] 	= { "PLAY", "EXIT" };
 
 static int is_snake_crashed(snkt snk, int lvl_id)
 {
-	int i, j, ret = 0;
+	int i, ret = 0;
 
 	ret += (lvl_shapes[lvl_id][snk.pos[0].y-1][snk.pos[0].x-1] == '#');
 
@@ -44,12 +43,6 @@ static int is_snake_crashed(snkt snk, int lvl_id)
 		ret += 	(snk.pos[0].x == snk.pos[i].x) &&
 				(snk.pos[0].y == snk.pos[i].y);
 	}
-
-#if 0
-	ret += ((snk.pos[0].x >= gwin_w-1) ||
-			(snk.pos[0].y >= gwin_h-1) || 
-			(snk.pos[0].x < 1) || (snk.pos[0].y < 1));
-#endif
 
 	return ret;
 }
@@ -60,6 +53,9 @@ static void add_snake_tail(snkt *snk)
 	snk->pos = realloc(snk->pos, sizeof(crdt)*(snk->len));
 	snk->pos[snk->len-1].x = snk->pos[snk->len-2].x;
 	snk->pos[snk->len-1].y = snk->pos[snk->len-2].y;
+#ifdef DEBUG
+			mvprintw(1, 12, "len = %03d", snk->len);
+#endif
 }
 
 static void free_snake(snkt *snk)
@@ -206,44 +202,64 @@ static void init_colors()
 	init_pair(gf_clrpid, COLOR_BLUE 	, COLOR_BLACK);
 }
 
+static void init_game_win(WINDOW **win, int sm_h, int sm_w)
+{
+	*win = newwin(gwin_h, gwin_w,
+				(sm_h - gwin_h)/2,
+				(sm_w - gwin_w)/2);
+	box(*win, 0, 0);
+}
+
+static int is_level_passed(int slen)
+{
+	return slen >= min_len_to_pass;
+}
+
+static void end_game_msg(int ilp, int sm_h, int sm_w)
+{
+	if(ilp) {
+		mvprintw((sm_h - gwin_h)/2,
+				(sm_w - sizeof(winning_msg) - 1)/2,
+				winning_msg);
+	} else {
+		mvprintw((sm_h - gwin_h)/2,
+				(sm_w - sizeof(losing_msg) - 1)/2,
+				losing_msg);
+	}
+	refresh();
+	napms(2000);
+}
+
 void snake_game(int lvl_id)
 {
-	WINDOW *game_win;
-	int key, scr_max_y, scr_max_x;
+	WINDOW *game_win = NULL;
+	int key, ilp, sm_h, sm_w;
 	crdt food;
 	snkt snake;
 
 	srand(time(NULL));
 	timeout(default_snake_speed);
+	getmaxyx(stdscr, sm_h, sm_w);
 
-	/* game window initialization */
-	getmaxyx(stdscr, scr_max_y, scr_max_x);
-	game_win = newwin(gwin_h, gwin_w,
-				(scr_max_y - gwin_h)/2,
-				(scr_max_x - gwin_w)/2);
-	box(game_win, 0, 0);
+	init_game_win(&game_win, sm_h, sm_w);
 
 	init_colors();
 
 	snake_init(game_win, &snake);
 	spawn_food(game_win, &food, snake, lvl_id);
 	init_gamefield(game_win, lvl_id);
+
 	wrefresh(game_win);
 
-	while((key = getch())) {
-		if(key == key_escape)
-			goto snake_exit;
+	while((key = getch()) != key_escape) {
 #ifdef DEBUG
-		else if(key == '+')
+		if(key == '+')
 			add_snake_tail(&snake);
 #endif
 		if(is_snake_on_food(food, snake.pos[0].x, snake.pos[0].y)) {
 			add_snake_tail(&snake);
 			spawn_food(game_win, &food, snake, lvl_id);
 			wrefresh(game_win);
-#ifdef DEBUG
-			mvprintw(1, 12, "len = %03d", snake.len);
-#endif
 		}
 
 		choose_direction(&(snake.dy), &(snake.dx), key);
@@ -260,21 +276,12 @@ void snake_game(int lvl_id)
 #endif
 		wrefresh(game_win);
 	}
-	
-	if(snake.len >= min_len_to_pass) {
-		mvprintw((scr_max_y - gwin_h)/2,
-				(scr_max_x - sizeof(winning_msg))/2,
-				winning_msg);
-	} else {
-		mvprintw((scr_max_y - gwin_h)/2,
-				(scr_max_x - sizeof(losing_msg))/2,
-				losing_msg);
+
+	if(key != key_escape) {
+		ilp = is_level_passed(snake.len);
+		end_game_msg(ilp, sm_h, sm_w);
 	}
-
-	refresh();
-	napms(2000);
-
-snake_exit:
+	
 	notimeout(game_win, 1);
 	free_snake(&snake);
 }
